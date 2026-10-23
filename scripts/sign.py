@@ -30,7 +30,12 @@ def run(*args):
     # and local signing paths. Do not expose it in public Actions logs/artifacts.
     p = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if p.returncode:
-        raise RuntimeError('Apple tool failed during '+STAGE+'; check valid matching signing assets')
+        operation = Path(args[0]).name
+        if args[0] == 'codesign':
+            operation += (' signature verification' if '--verify' in args else
+                          ' entitlement extraction' if '--entitlements' in args else
+                          ' certificate extraction')
+        raise RuntimeError(operation+' failed during '+STAGE+'; tool output suppressed to protect signing metadata')
     return p.stdout
 
 def check_profile(raw, team):
@@ -100,7 +105,9 @@ try:
     with zipfile.ZipFile(ipa) as z:
         for n in z.namelist():
             assert not n.startswith('/') and '..' not in Path(n).parts, 'Unsafe IPA member'
-        z.extractall(extracted)
+    # Apple's extractor preserves executable modes and symlinks required for
+    # strict bundle validation; Python extractall does not preserve those modes.
+    run('ditto','-x','-k',str(ipa),str(extracted))
     apps = list((extracted/'Payload').glob('*.app'))
     assert len(apps)==1 and apps[0].name=='E41.app', 'Unexpected IPA application'
     app = apps[0]
@@ -118,7 +125,9 @@ try:
     for group in ent.get('keychain-access-groups',[]):
         assert group==ent['application-identifier'], 'Unexpected keychain group'
     prefix = str(PRIVATE/'signer-')
-    run('codesign','-d','--extract-certificates',prefix,str(app))
+    # This option has an optional argument: use '=' so prefix is not parsed as
+    # another code object to inspect.
+    run('codesign','-d','--extract-certificates='+prefix,str(app))
     assert (PRIVATE/'signer-0').read_bytes() in profile['DeveloperCertificates'], 'Signer not in profile'
     Path('build/signed-verification.json').write_text(json.dumps({
         'bundle_identifier':BUNDLE,'distribution':'ad_hoc_release_testing',
