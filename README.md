@@ -28,6 +28,8 @@ CI checks project references/scheme, compiles Swift with the iphoneos SDK, and
 checks arm64, bundle ID and physical platform. Unsigned diagnostics are separate.
 Compilation is not app launch, installation or permission testing.
 
+Recorded successful runs and downloadable artifact: [build status](docs/BUILD_STATUS.md).
+
 ## Signing and installation
 
 See [Signing](docs/SIGNING.md) and [Installation](docs/INSTALLATION.md).
