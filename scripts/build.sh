@@ -12,7 +12,7 @@ xcodebuild -project E41.xcodeproj -scheme E41 -configuration Release \
 APP=build/DerivedData/Build/Products/Release-iphoneos/E41.app
 test -d "$APP"
 file "$APP/E41" | tee build/binary.txt
-lipo -verify_arch arm64 "$APP/E41"
+lipo "$APP/E41" -verify_arch arm64
 python3 - "$APP/Info.plist" <<'PY'
 import plistlib,sys
 p=plistlib.load(open(sys.argv[1],'rb'))

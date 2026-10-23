@@ -106,7 +106,7 @@ try:
     app = apps[0]
     info = plistlib.loads((app/'Info.plist').read_bytes())
     assert info['CFBundleIdentifier']==BUNDLE and info['CFBundleSupportedPlatforms']==['iPhoneOS']
-    run('lipo','-verify_arch','arm64',str(app/'E41'))
+    run('lipo',str(app/'E41'),'-verify_arch','arm64')
     run('codesign','--verify','--deep','--strict',str(app))
     embedded = check_profile(app/'embedded.mobileprovision',team)
     assert embedded['UUID']==profile['UUID'], 'Exported profile mismatch'
