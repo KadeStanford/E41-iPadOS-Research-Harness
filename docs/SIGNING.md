@@ -1,5 +1,9 @@
 # Manual Apple signing setup
 
+Update 2026-10-23: the four secrets are configured and signed export/verification
+has passed. See [signed build status](SIGNED_BUILD_STATUS.md). The initial-state
+description below is preserved as setup history; actual installation is untested.
+
 Status: no repository signing secrets were present at initial setup. Membership,
 certificate possession and device registration are unknown. An Apple ID alone
 does not establish paid Developer Program membership or ad hoc signing rights.

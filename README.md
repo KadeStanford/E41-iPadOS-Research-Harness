@@ -28,7 +28,8 @@ CI checks project references/scheme, compiles Swift with the iphoneos SDK, and
 checks arm64, bundle ID and physical platform. Unsigned diagnostics are separate.
 Compilation is not app launch, installation or permission testing.
 
-Recorded successful runs and downloadable artifact: [build status](docs/BUILD_STATUS.md).
+Recorded unsigned runs: [build status](docs/BUILD_STATUS.md).
+Signed IPA export and verification also passed: [signed build and download](docs/SIGNED_BUILD_STATUS.md).
 
 ## Signing and installation
 
@@ -36,7 +37,8 @@ See [Signing](docs/SIGNING.md) and [Installation](docs/INSTALLATION.md).
 Manual signed mode also performs unsigned validation, then requires four secrets,
 archives/exports ad hoc (`release-testing`), and verifies signature, profile,
 bundle, architecture and entitlements. No automatic portal login or provisioning
-updates. Signed export remains unverified until an actual successful signed run.
+updates. Signed export has passed; physical installation and permission testing
+remain unperformed.
 
 ## Synthetic-only procedure
 
