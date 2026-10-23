@@ -19,8 +19,10 @@ Unsigned compilation proceeds independently; signed CI has not been executed.
    [CSR procedure](https://developer.apple.com/help/account/certificates/create-a-certificate-signing-request/),
    add Apple Distribution under Certificates in the portal, download/import the
    certificate on the computer that holds the CSR private key, then export both
-   as `.p12`. This one-time Apple-supported Mac/keychain setup is distinct from
-   routine hosted builds; no Mac or exported identity is established here.
+   as `.p12`. Alternatively, generate the CSR/private key and package the issued
+   certificate on Windows using OpenSSL: see [Windows signing](WINDOWS_SIGNING.md).
+   A local Mac is not required for credential preparation; hosted Xcode still
+   performs actual application signing.
 4. Register the research iPad in the portal's Devices section using its identifier
    privately. Never post it to this repository, issue, chat or build log.
 5. Profiles > + > Distribution > **Ad Hoc**: choose the exact App ID, matching
