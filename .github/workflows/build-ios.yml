@@ -1,0 +1,75 @@
+name: Build E41 iPadOS harness
+on:
+  push:
+    branches: [main]
+    paths: ['E41/**', 'E41.xcodeproj/**', 'scripts/**', '.github/workflows/build-ios.yml']
+  pull_request:
+    paths: ['E41/**', 'E41.xcodeproj/**', 'scripts/**', '.github/workflows/build-ios.yml']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Unsigned compilation or signed ad hoc IPA
+        type: choice
+        options: [unsigned, signed]
+        default: unsigned
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate and compile unsigned physical-device Release
+        run: bash scripts/build.sh
+      - name: Upload unsigned compilation artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: E41-UNSIGNED-NOT-INSTALLABLE
+          path: |
+            build/E41-UNSIGNED-NOT-INSTALLABLE.app.zip
+            build/unsigned-sha256.txt
+            build/toolchain.txt
+            build/binary.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Archive and export signed ad hoc IPA
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'signed' && github.ref == 'refs/heads/main'
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: python3 scripts/sign.py
+      - name: Upload verified signed IPA
+        if: success() && github.event_name == 'workflow_dispatch' && inputs.mode == 'signed' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: E41-SIGNED-ADHOC
+          path: |
+            build/export/E41.ipa
+            build/signed-verification.json
+          if-no-files-found: error
+          retention-days: 3
+      - name: Clean signing material even after failure or cancellation
+        if: always()
+        shell: bash
+        run: |
+          security delete-keychain "$RUNNER_TEMP/E41-signing.keychain-db" >/dev/null 2>&1 || true
+          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/E41-ci.mobileprovision"
+          rm -f "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles/E41-ci.mobileprovision"
+          rm -rf "$RUNNER_TEMP/E41-signing"
+      - name: Upload unsigned compilation diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: E41-unsigned-build-diagnostics
+          path: |
+            build/unsigned-build.log
+            build/toolchain.txt
+          if-no-files-found: ignore
+          retention-days: 14
